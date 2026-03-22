@@ -75,6 +75,9 @@ It reads and controls active external media sessions via Android MediaSession/No
 
 
 ```md
-![Main UI](docs/screenshot-main.png)
-![Flip Layout](docs/video.mp4)
+<img width="1024" height="1024" alt="app-logo-vinylremote" src="https://github.com/user-attachments/assets/e91dd025-bfda-4f58-9bf0-cf1fc7ebe2ae" />
+![screenshot-main](https://github.com/user-attachments/assets/7ba11dc9-a408-4499-b9a3-fe28a9b4925f)
+https://github.com/user-attachments/assets/81c40341-d6ab-424d-ae16-0397d1e255b7
+
+
 ```
