@@ -73,10 +73,8 @@ It reads and controls active external media sessions via Android MediaSession/No
 
 ## 8. Screenshots / Demo
 
-Add your media files under `docs/` and reference here:
 
 ```md
 ![Main UI](docs/screenshot-main.png)
-![Flip Layout](docs/screenshot-flip.png)
-![Widget](docs/screenshot-widget.png)
+![Flip Layout](docs/video.mp4)
 ```
