@@ -1,5 +1,6 @@
 # Vinyl Remote
 
+![Vinyl Remote Logo](docs/app-logo-vinylremote.png)
 Android turntable-style remote controller for Spotify / YouTube Music sessions.
 
 ## 1. Project Summary
@@ -73,10 +74,23 @@ It reads and controls active external media sessions via Android MediaSession/No
 
 ## 8. Screenshots / Demo
 
-Add your media files under `docs/` and reference here:
+### Main UI
 
-```md
 ![Main UI](docs/screenshot-main.png)
-![Flip Layout](docs/screenshot-flip.png)
-![Widget](docs/screenshot-widget.png)
-```
+
+### Flip Layout Demo
+
+<video src="docs/video.mp4" controls width="360"></video>
+
+If your Markdown viewer does not support inline video:
+
+[Open Flip Layout Demo (MP4)](docs/video.mp4)
+
+## 9. Release Build File
+
+- Unsigned release APK:
+  - `release/VinylRemote-v0.1.0-release-unsigned.apk`
+- SHA-256:
+  - `40EF72B6A65B700C1D673551435D55AC106B092D59F09C7392E3233F04F83B27`
+
+Note: this artifact is unsigned. For public distribution, generate and sign a release build with your keystore.
