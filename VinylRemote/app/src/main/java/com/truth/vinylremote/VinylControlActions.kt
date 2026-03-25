@@ -7,6 +7,8 @@ internal object VinylControlActions {
     const val ACTION_PREV = "com.truth.vinylremote.action.PREV"
     const val ACTION_TOGGLE_PLAY_PAUSE = "com.truth.vinylremote.action.TOGGLE_PLAY_PAUSE"
     const val ACTION_NEXT = "com.truth.vinylremote.action.NEXT"
+    const val ACTION_SEEK_BACK = "com.truth.vinylremote.action.SEEK_BACK"
+    const val ACTION_SEEK_FORWARD = "com.truth.vinylremote.action.SEEK_FORWARD"
     const val ACTION_NEEDLE_IN = "com.truth.vinylremote.action.NEEDLE_IN"
     const val ACTION_NEEDLE_OUT = "com.truth.vinylremote.action.NEEDLE_OUT"
 

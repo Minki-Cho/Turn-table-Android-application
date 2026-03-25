@@ -3,6 +3,7 @@
 **/build/
 local.properties
 .gradle-home/
+.android-home/
 
 # IDE
 .idea/

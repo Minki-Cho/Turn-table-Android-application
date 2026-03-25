@@ -4,7 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 
-class VinylRemoteWidgetProvider : AppWidgetProvider() {
+class VinylTurntableWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,

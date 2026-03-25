@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:background="@drawable/widget_vinyl_bg"
-    android:orientation="vertical"
-    android:padding="12dp"
+    android:padding="14dp"
     tools:ignore="UseAppTint,HardcodedText">
 
     <TextView
@@ -17,31 +16,34 @@
         android:maxLines="1"
         android:text="Vinyl Remote"
         android:textColor="#FFF5F8FC"
-        android:textSize="14sp"
+        android:textSize="16sp"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/widget_subtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
+        android:layout_below="@id/widget_title"
+        android:layout_marginTop="4dp"
         android:ellipsize="end"
         android:maxLines="1"
         android:text="No active playback"
         android:textColor="#C8D5E3"
-        android:textSize="12sp" />
+        android:textSize="13sp" />
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:id="@+id/widget_controls"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
         android:gravity="center"
         android:orientation="horizontal">
 
         <ImageButton
             android:id="@+id/widget_btn_prev"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:background="@android:color/transparent"
             android:contentDescription="Previous"
             android:src="@android:drawable/ic_media_previous"
@@ -49,8 +51,8 @@
 
         <ImageButton
             android:id="@+id/widget_btn_play_pause"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:layout_width="54dp"
+            android:layout_height="54dp"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
             android:background="@android:color/transparent"
@@ -60,8 +62,8 @@
 
         <ImageButton
             android:id="@+id/widget_btn_next"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:background="@android:color/transparent"
             android:contentDescription="Next"
             android:src="@android:drawable/ic_media_next"
@@ -69,12 +71,50 @@
 
         <ImageButton
             android:id="@+id/widget_btn_extra"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_marginStart="10dp"
             android:background="@android:color/transparent"
             android:contentDescription="Open app"
             android:src="@android:drawable/ic_menu_view"
             android:tint="#9CD2FF" />
     </LinearLayout>
-</LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/widget_turntable_holder"
+        android:layout_width="240dp"
+        android:layout_height="240dp"
+        android:layout_below="@id/widget_subtitle"
+        android:layout_above="@id/widget_controls"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="Turntable platter"
+            android:src="@drawable/widget_turntable_disc" />
+
+        <ImageView
+            android:layout_width="220dp"
+            android:layout_height="220dp"
+            android:layout_gravity="center"
+            android:contentDescription="Turntable ring"
+            android:src="@drawable/widget_turntable_ring" />
+
+        <ImageView
+            android:layout_width="98dp"
+            android:layout_height="98dp"
+            android:layout_gravity="center"
+            android:contentDescription="Turntable label"
+            android:src="@drawable/widget_turntable_label" />
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center"
+            android:contentDescription="Spindle"
+            android:src="@drawable/widget_turntable_hole" />
+    </FrameLayout>
+</RelativeLayout>

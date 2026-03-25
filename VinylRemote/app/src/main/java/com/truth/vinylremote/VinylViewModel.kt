@@ -1,5 +1,6 @@
 package com.truth.vinylremote
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import android.content.Intent
@@ -52,7 +53,7 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
 
     private val mediaController = ExternalMediaSessionController(application)
     private val lyricsProvider = LyricsProvider()
-    private val onlineLyricsEnabled = BuildConfig.LYRICS_ONLINE_ENABLED
+    private val onlineLyricsEnabled = false
     private val lyricsPrefs =
         application.getSharedPreferences("vinyl_remote_lyrics", Context.MODE_PRIVATE)
 
@@ -195,53 +196,16 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun retryLyricsLookup() {
-        if (!onlineLyricsEnabled) return
-        val current = _uiState.value
-        val key = lyricsLookupKey(current.title, current.artist)
-        externalLyricsCache.remove(key)
-        lyricsFailedAtMs.remove(key)
-        if (lyricsFetchInFlightKey == key) {
-            lyricsFetchInFlightKey = null
-            lyricsFetchJob?.cancel()
-        }
-        maybeFetchExternalLyrics(
-            key = key,
-            title = current.title,
-            artist = current.artist,
-            durationMs = current.durationMs
-        )
+        // Lyrics feature is intentionally disabled for release.
     }
 
-    fun saveManualLyrics(lyrics: String) {
-        val current = _uiState.value
-        val key = lyricsLookupKey(current.title, current.artist)
-        val normalized = lyrics
-            .replace("\r\n", "\n")
-            .replace('\r', '\n')
-            .trim()
-        if (normalized.isBlank()) {
-            clearManualLyrics()
-            return
-        }
-        manualLyricsCache[key] = normalized
-        lyricsPrefs.edit().putString(manualLyricsStorageKey(key), normalized).apply()
-        _uiState.update { it.copy(lyrics = normalized) }
+    fun saveManualLyrics(@Suppress("UNUSED_PARAMETER") lyrics: String) {
+        // Lyrics feature is intentionally disabled for release.
+        _uiState.update { it.copy(lyrics = "") }
     }
 
     fun clearManualLyrics() {
-        val current = _uiState.value
-        val key = lyricsLookupKey(current.title, current.artist)
-        manualLyricsCache.remove(key)
-        lyricsPrefs.edit().remove(manualLyricsStorageKey(key)).apply()
         _uiState.update { it.copy(lyrics = "") }
-        if (onlineLyricsEnabled) {
-            maybeFetchExternalLyrics(
-                key = key,
-                title = current.title,
-                artist = current.artist,
-                durationMs = current.durationMs
-            )
-        }
     }
 
     private fun refreshState() {
@@ -309,7 +273,7 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
                     hasNotificationAccess = true,
                     connectedPackage = null,
                     title = "No active playback",
-                    artist = "Play music in Spotify or YouTube Music.",
+                    artist = "Play music in your media app (Spotify, YouTube Music, Apple Music, etc.).",
                     isPlaying = false,
                     canSeek = false,
                     positionMs = 0L,
@@ -330,13 +294,6 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
             ?.takeIf { it > 0L } ?: 0L
         val displayTitle = metadata?.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE)
         val displaySubtitle = metadata?.getString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE)
-        val displayDescription = metadata?.getString(MediaMetadata.METADATA_KEY_DISPLAY_DESCRIPTION)
-        val lyricText = metadata?.getText("android.media.metadata.LYRIC")?.toString()
-        val metadataLyrics = when {
-            !lyricText.isNullOrBlank() -> lyricText
-            !displayDescription.isNullOrBlank() -> displayDescription
-            else -> ""
-        }
         val resolvedTitle = displayTitle
             ?: metadata?.getString(MediaMetadata.METADATA_KEY_TITLE)
             ?: "Unknown title"
@@ -344,15 +301,7 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
             ?: metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST)
             ?: metadata?.getString(MediaMetadata.METADATA_KEY_ALBUM)
             ?: ""
-        val lyricsKey = lyricsLookupKey(resolvedTitle, resolvedArtist)
-        val manualLyrics = resolveManualLyrics(lyricsKey)
-        val fetchedLyrics = externalLyricsCache[lyricsKey].orEmpty()
-        val lyrics = when {
-            manualLyrics.isNotBlank() -> manualLyrics
-            metadataLyrics.isNotBlank() -> metadataLyrics
-            fetchedLyrics.isNotBlank() -> fetchedLyrics
-            else -> ""
-        }
+        val lyrics = ""
         val albumArt = metadata?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
             ?: metadata?.getBitmap(MediaMetadata.METADATA_KEY_ART)
             ?: metadata?.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)
@@ -403,32 +352,7 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
         }
         publishExternalControls(_uiState.value)
 
-        if (onlineLyricsEnabled && manualLyrics.isBlank() && metadataLyrics.isBlank()) {
-            maybePrefetchLyrics(
-                key = lyricsKey,
-                title = resolvedTitle,
-                artist = resolvedArtist,
-                durationMs = duration
-            )
-            maybeFetchExternalLyrics(
-                key = lyricsKey,
-                title = resolvedTitle,
-                artist = resolvedArtist,
-                durationMs = duration
-            )
-            if (
-                lyrics.isBlank() &&
-                resolvedPosition >= LYRICS_FORCE_RETRY_AFTER_POSITION_MS
-            ) {
-                maybeFetchExternalLyrics(
-                    key = lyricsKey,
-                    title = resolvedTitle,
-                    artist = resolvedArtist,
-                    durationMs = duration,
-                    force = true
-                )
-            }
-        }
+        // Lyrics feature is intentionally disabled for release.
     }
 
     private fun publishExternalControls(state: VinylUiState) {
@@ -442,6 +366,12 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
             append(state.isPlaying)
             append('|')
             append(state.needleProgress >= NEEDLE_PLAY_START)
+            append('|')
+            append(state.positionMs / 1000L)
+            append('|')
+            append(state.durationMs / 1000L)
+            append('|')
+            append(state.lyrics.hashCode())
         }
         if (signature == lastExternalControlSignature) return
         lastExternalControlSignature = signature

@@ -48,6 +48,19 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/vinyl_remote_widget_info" />
         </receiver>
+
+        <receiver
+            android:name=".VinylTurntableWidgetProvider"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/vinyl_turntable_widget_info" />
+        </receiver>
+
     </application>
 
 </manifest>
