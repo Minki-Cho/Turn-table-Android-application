@@ -29,7 +29,6 @@ internal object VinylExternalControls {
     private const val KEY_NEEDLE_ON_RECORD = "needle_on_record"
     private const val KEY_POSITION_MS = "position_ms"
     private const val KEY_DURATION_MS = "duration_ms"
-    private const val KEY_LYRICS = "lyrics"
 
     fun publish(context: Context, state: VinylUiState) {
         ensureChannel(context)
@@ -128,15 +127,13 @@ internal object VinylExternalControls {
         val needleOnRecord = prefs.getBoolean(KEY_NEEDLE_ON_RECORD, false)
         val positionMs = prefs.getLong(KEY_POSITION_MS, 0L)
         val durationMs = prefs.getLong(KEY_DURATION_MS, 0L)
-        val lyrics = prefs.getString(KEY_LYRICS, "").orEmpty()
         return VinylUiState(
             title = title,
             artist = artist,
             isPlaying = isPlaying,
             positionMs = positionMs,
             durationMs = durationMs,
-            needleProgress = if (needleOnRecord) 0.30f else 0.05f,
-            lyrics = lyrics
+            needleProgress = if (needleOnRecord) 0.30f else 0.05f
         )
     }
 
@@ -149,65 +146,7 @@ internal object VinylExternalControls {
             .putBoolean(KEY_NEEDLE_ON_RECORD, state.needleProgress >= 0.30f)
             .putLong(KEY_POSITION_MS, state.positionMs)
             .putLong(KEY_DURATION_MS, state.durationMs)
-            .putString(KEY_LYRICS, state.lyrics)
             .apply()
-    }
-
-    private fun extractLyricsMiniLine(lyrics: String, positionMs: Long, durationMs: Long): String {
-        val normalized = lyrics
-            .replace("\r\n", "\n")
-            .replace('\r', '\n')
-            .trim()
-        if (normalized.isBlank()) return ""
-
-        val timed = parseTimedLyrics(normalized)
-        val line = if (timed.isNotEmpty()) {
-            val current = positionMs.coerceAtLeast(0L)
-            timed.lastOrNull { it.first <= current }?.second ?: timed.first().second
-        } else {
-            val plain = normalized
-                .lineSequence()
-                .map { it.trim() }
-                .filter { it.isNotBlank() }
-                .toList()
-            if (plain.isEmpty()) "" else {
-                if (durationMs > 0L && plain.size > 1) {
-                    val p = (positionMs.toDouble() / durationMs.toDouble()).coerceIn(0.0, 1.0)
-                    val idx = (p * (plain.lastIndex)).toInt().coerceIn(0, plain.lastIndex)
-                    plain[idx]
-                } else {
-                    plain.first()
-                }
-            }
-        }
-        return if (line.length > 72) line.take(71).trimEnd() + "..." else line
-    }
-
-    private fun parseTimedLyrics(lyrics: String): List<Pair<Long, String>> {
-        val tag = Regex("""\[(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?]""")
-        val cues = mutableListOf<Pair<Long, String>>()
-        for (raw in lyrics.lineSequence()) {
-            val line = raw.trim()
-            if (line.isBlank()) continue
-            val text = tag.replace(line, "").trim()
-            if (text.isBlank()) continue
-            val matches = tag.findAll(line).toList()
-            if (matches.isEmpty()) continue
-            for (m in matches) {
-                val min = m.groupValues[1].toLongOrNull() ?: continue
-                val sec = m.groupValues[2].toLongOrNull() ?: continue
-                val fracRaw = m.groupValues[3]
-                val fracMs = when (fracRaw.length) {
-                    0 -> 0L
-                    1 -> (fracRaw.toLongOrNull() ?: 0L) * 100L
-                    2 -> (fracRaw.toLongOrNull() ?: 0L) * 10L
-                    else -> (fracRaw.take(3).toLongOrNull() ?: 0L)
-                }
-                val ms = min * 60_000L + sec * 1_000L + fracMs
-                cues += ms to text
-            }
-        } 
-        return cues.sortedBy { it.first }
     }
 
     private fun updateWidget(context: Context, state: VinylUiState) {

@@ -1,8 +1,6 @@
 package com.truth.vinylremote
 
-import android.annotation.SuppressLint
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.media.MediaMetadata
@@ -13,14 +11,12 @@ import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.security.MessageDigest
 
 data class VinylUiState(
     val hasNotificationAccess: Boolean = false,
@@ -33,8 +29,7 @@ data class VinylUiState(
     val durationMs: Long = 0L,
     val playbackSpeed: Float = 1f,
     val needleProgress: Float = 0f,
-    val albumArt: Bitmap? = null,
-    val lyrics: String = ""
+    val albumArt: Bitmap? = null
 )
 
 class VinylViewModel(application: Application) : AndroidViewModel(application) {
@@ -44,18 +39,9 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
         private const val NEEDLE_PLAY_START = 0.30f
         private const val NEEDLE_PLAY_END = 0.98f
         private const val NEEDLE_SNAP_PAUSE = 0.05f
-        private const val LYRICS_RETRY_INTERVAL_MS = 20_000L
-        private const val LYRICS_FORCE_RETRY_INTERVAL_MS = 12_000L
-        private const val LYRICS_FORCE_RETRY_AFTER_POSITION_MS = 12_000L
-        private const val LYRICS_AUTO_RETRY_COUNT = 2
-        private const val LYRICS_AUTO_RETRY_DELAY_MS = 650L
     }
 
     private val mediaController = ExternalMediaSessionController(application)
-    private val lyricsProvider = LyricsProvider()
-    private val onlineLyricsEnabled = false
-    private val lyricsPrefs =
-        application.getSharedPreferences("vinyl_remote_lyrics", Context.MODE_PRIVATE)
 
     private val _uiState = MutableStateFlow(
         VinylUiState(hasNotificationAccess = mediaController.hasNotificationAccess())
@@ -66,13 +52,6 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
     private var sessionCallback: MediaController.Callback? = null
     private var needleIntentPlaying: Boolean? = null
     private var suppressAutoNeedleUntilMs: Long = 0L
-    private var lyricsFetchJob: Job? = null
-    private var lyricsFetchInFlightKey: String? = null
-    private var lastPrefetchKey: String? = null
-    private val externalLyricsCache = mutableMapOf<String, String>()
-    private val manualLyricsCache = mutableMapOf<String, String>()
-    private val lyricsFailedAtMs = mutableMapOf<String, Long>()
-    private val lyricsForceRetryAtMs = mutableMapOf<String, Long>()
     private var lastExternalControlSignature = ""
     private var lastHandledNeedleCommandSeq = VinylControlActions.readNeedleCommand(application).seq
 
@@ -195,19 +174,6 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
         activeController?.transportControls?.seekTo(target)
     }
 
-    fun retryLyricsLookup() {
-        // Lyrics feature is intentionally disabled for release.
-    }
-
-    fun saveManualLyrics(@Suppress("UNUSED_PARAMETER") lyrics: String) {
-        // Lyrics feature is intentionally disabled for release.
-        _uiState.update { it.copy(lyrics = "") }
-    }
-
-    fun clearManualLyrics() {
-        _uiState.update { it.copy(lyrics = "") }
-    }
-
     private fun refreshState() {
         val hasAccess = mediaController.hasNotificationAccess()
         if (!hasAccess) {
@@ -223,8 +189,7 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
                     positionMs = 0L,
                     durationMs = 0L,
                     playbackSpeed = 1f,
-                    albumArt = null,
-                    lyrics = ""
+                    albumArt = null
                 )
             }
             lastExternalControlSignature = ""
@@ -279,8 +244,7 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
                     positionMs = 0L,
                     durationMs = 0L,
                     playbackSpeed = 1f,
-                    albumArt = null,
-                    lyrics = ""
+                    albumArt = null
                 )
             }
             publishExternalControls(_uiState.value)
@@ -301,7 +265,6 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
             ?: metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST)
             ?: metadata?.getString(MediaMetadata.METADATA_KEY_ALBUM)
             ?: ""
-        val lyrics = ""
         val albumArt = metadata?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
             ?: metadata?.getBitmap(MediaMetadata.METADATA_KEY_ART)
             ?: metadata?.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)
@@ -346,13 +309,10 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
                 durationMs = duration,
                 playbackSpeed = state?.playbackSpeed ?: 1f,
                 needleProgress = commandNeedleProgress ?: autoNeedleProgress,
-                albumArt = albumArt,
-                lyrics = lyrics
+                albumArt = albumArt
             )
         }
         publishExternalControls(_uiState.value)
-
-        // Lyrics feature is intentionally disabled for release.
     }
 
     private fun publishExternalControls(state: VinylUiState) {
@@ -370,8 +330,6 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
             append(state.positionMs / 1000L)
             append('|')
             append(state.durationMs / 1000L)
-            append('|')
-            append(state.lyrics.hashCode())
         }
         if (signature == lastExternalControlSignature) return
         lastExternalControlSignature = signature
@@ -380,132 +338,33 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun resolvePositionMs(state: PlaybackState?, durationMs: Long): Long {
         if (state == null) return 0L
-        val base = state.position.coerceAtLeast(0L)
         val now = SystemClock.elapsedRealtime()
         val isPlaying =
             state.state == PlaybackState.STATE_PLAYING || state.state == PlaybackState.STATE_BUFFERING
-        if (!isPlaying) return clampPosition(base, durationMs)
-
-        val lastUpdate = state.lastPositionUpdateTime
-        if (lastUpdate <= 0L) return clampPosition(base, durationMs)
-        val elapsed = (now - lastUpdate).coerceAtLeast(0L)
-        val speed = if (state.playbackSpeed == 0f) 1f else state.playbackSpeed
-        val estimated = base + (elapsed * speed).toLong()
-        return clampPosition(estimated, durationMs)
-    }
-
-    private fun clampPosition(positionMs: Long, durationMs: Long): Long {
-        if (durationMs <= 0L) return positionMs.coerceAtLeast(0L)
-        return positionMs.coerceIn(0L, durationMs)
-    }
-
-    private fun needleToTrackFraction(needleProgress: Float): Float {
-        val p = needleProgress.coerceIn(NEEDLE_PLAY_START, NEEDLE_PLAY_END)
-        return (p - NEEDLE_PLAY_START) / (NEEDLE_PLAY_END - NEEDLE_PLAY_START)
-    }
-
-    private fun trackFractionToNeedle(trackFraction: Float): Float {
-        val f = trackFraction.coerceIn(0f, 1f)
-        return NEEDLE_PLAY_START + (NEEDLE_PLAY_END - NEEDLE_PLAY_START) * f
-    }
-
-    override fun onCleared() {
-        lyricsFetchJob?.cancel()
-        detachController()
-        super.onCleared()
-    }
-
-    private fun maybeFetchExternalLyrics(
-        key: String,
-        title: String,
-        artist: String,
-        durationMs: Long,
-        force: Boolean = false
-    ) {
-        if (title.isBlank()) return
-        if (externalLyricsCache.containsKey(key)) return
-        if (lyricsFetchInFlightKey == key) return
-        val now = SystemClock.elapsedRealtime()
-        if (!force) {
-            val lastFailedAt = lyricsFailedAtMs[key] ?: 0L
-            if (now - lastFailedAt < LYRICS_RETRY_INTERVAL_MS) return
-        } else {
-            val lastForceAt = lyricsForceRetryAtMs[key] ?: 0L
-            if (now - lastForceAt < LYRICS_FORCE_RETRY_INTERVAL_MS) return
-            lyricsForceRetryAtMs[key] = now
-        }
-
-        lyricsFetchInFlightKey = key
-        lyricsFetchJob?.cancel()
-        lyricsFetchJob = viewModelScope.launch {
-            var fetched = ""
-            for (attempt in 0..LYRICS_AUTO_RETRY_COUNT) {
-                fetched = lyricsProvider.fetchLyrics(
-                    title = title,
-                    artist = artist,
-                    durationMs = durationMs
-                ).orEmpty()
-                if (fetched.isNotBlank()) break
-                if (attempt < LYRICS_AUTO_RETRY_COUNT) {
-                    delay(LYRICS_AUTO_RETRY_DELAY_MS)
-                }
-            }
-
-            if (fetched.isNotBlank()) {
-                externalLyricsCache[key] = fetched
-                lyricsFailedAtMs.remove(key)
-                lyricsForceRetryAtMs.remove(key)
-                val current = _uiState.value
-                if (lyricsLookupKey(current.title, current.artist) == key && current.lyrics.isBlank()) {
-                    _uiState.update { it.copy(lyrics = fetched) }
-                }
-            } else {
-                lyricsFailedAtMs[key] = SystemClock.elapsedRealtime()
-            }
-            if (lyricsFetchInFlightKey == key) {
-                lyricsFetchInFlightKey = null
-            }
-        }
-    }
-
-    private fun maybePrefetchLyrics(
-        key: String,
-        title: String,
-        artist: String,
-        durationMs: Long
-    ) {
-        if (lastPrefetchKey == key) return
-        lastPrefetchKey = key
-        maybeFetchExternalLyrics(
-            key = key,
-            title = title,
-            artist = artist,
-            durationMs = durationMs,
-            force = true
+        return PlaybackMath.estimatePositionMs(
+            basePositionMs = state.position,
+            lastUpdateElapsedRealtimeMs = state.lastPositionUpdateTime,
+            nowElapsedRealtimeMs = now,
+            playbackSpeed = state.playbackSpeed,
+            isPlaying = isPlaying,
+            durationMs = durationMs
         )
     }
 
-    private fun lyricsLookupKey(title: String, artist: String): String {
-        return "${title.trim().lowercase()}|${artist.trim().lowercase()}"
+    private fun clampPosition(positionMs: Long, durationMs: Long): Long {
+        return PlaybackMath.clampPosition(positionMs, durationMs)
     }
 
-    private fun resolveManualLyrics(key: String): String {
-        val cached = manualLyricsCache[key]
-        if (cached != null) return cached
-        val fromPrefs = lyricsPrefs
-            .getString(manualLyricsStorageKey(key), "")
-            .orEmpty()
-            .trim()
-        if (fromPrefs.isNotBlank()) {
-            manualLyricsCache[key] = fromPrefs
-        }
-        return fromPrefs
+    private fun needleToTrackFraction(needleProgress: Float): Float {
+        return PlaybackMath.needleToTrackFraction(needleProgress)
     }
 
-    private fun manualLyricsStorageKey(lookupKey: String): String {
-        val hash = MessageDigest.getInstance("SHA-256")
-            .digest(lookupKey.toByteArray())
-            .joinToString("") { "%02x".format(it) }
-        return "m_$hash"
+    private fun trackFractionToNeedle(trackFraction: Float): Float {
+        return PlaybackMath.trackFractionToNeedle(trackFraction)
+    }
+
+    override fun onCleared() {
+        detachController()
+        super.onCleared()
     }
 }

@@ -435,21 +435,10 @@ private const val PRIMARY_REFLECTION_START = 214f
 private const val PRIMARY_REFLECTION_SWEEP = 56f
 private const val SECONDARY_REFLECTION_START = 20f
 private const val SECONDARY_REFLECTION_SWEEP = 30f
-private const val LYRICS_SCROLL_HOLD_MS = 15_000L
 private const val UI_PREFS_NAME = "vinyl_remote_ui_prefs"
 private const val UI_PREF_THEME_KEY = "selected_theme"
 private const val UI_PREF_VISUAL_KEY = "selected_visual"
 private const val UI_PREF_VISUALIZER_KEY = "selected_visualizer"
-
-private data class LyricCue(
-    val timeMs: Long,
-    val text: String
-)
-
-private data class LrcParseResult(
-    val cues: List<LyricCue>,
-    val offsetMs: Long
-)
 
 private data class MoonPhaseState(
     val illumination: Float,
@@ -739,52 +728,6 @@ private fun performNeedleDropVibration(context: Context, strong: Boolean) {
     } catch (_: Throwable) {
         // Ignore device-specific vibration errors.
     }
-}
-
-private fun parseLrc(rawLyrics: String): LrcParseResult {
-    val timestampRegex = Regex("""\[(\d{1,2}):(\d{1,2})(?:[.:](\d{1,3}))?]""")
-    val offsetRegex = Regex("""\[(?i:offset)\s*:\s*([+-]?\d+)]""")
-    val cues = mutableListOf<LyricCue>()
-    var offsetMs = 0L
-
-    rawLyrics
-        .replace("\r\n", "\n")
-        .replace('\r', '\n')
-        .lines()
-        .forEach { line ->
-            offsetRegex.find(line)?.let { match ->
-                offsetMs = match.groupValues.getOrNull(1)?.toLongOrNull() ?: 0L
-            }
-
-            val matches = timestampRegex.findAll(line).toList()
-            if (matches.isEmpty()) return@forEach
-
-            val text = line.replace(timestampRegex, "").trim()
-            if (text.isBlank()) return@forEach
-
-            matches.forEach { m ->
-                val min = m.groupValues.getOrNull(1)?.toLongOrNull() ?: 0L
-                val sec = m.groupValues.getOrNull(2)?.toLongOrNull() ?: 0L
-                val fracRaw = m.groupValues.getOrNull(3).orEmpty()
-                val millis = when (fracRaw.length) {
-                    0 -> 0L
-                    1 -> fracRaw.toLongOrNull()?.times(100L) ?: 0L
-                    2 -> fracRaw.toLongOrNull()?.times(10L) ?: 0L
-                    else -> fracRaw.take(3).toLongOrNull() ?: 0L
-                }
-                cues += LyricCue(
-                    timeMs = min * 60_000L + sec * 1_000L + millis,
-                    text = text
-                )
-            }
-        }
-
-    return LrcParseResult(
-        cues = cues
-            .sortedBy { it.timeMs }
-            .distinctBy { it.timeMs to it.text },
-        offsetMs = offsetMs
-    )
 }
 
 class MainActivity : ComponentActivity() {

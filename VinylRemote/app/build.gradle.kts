@@ -41,15 +41,12 @@ android {
     }
 
     buildTypes {
-        debug {
-            buildConfigField("boolean", "LYRICS_ONLINE_ENABLED", "true")
-        }
+        debug {}
         release {
             if (hasReleaseKeystore) {
                 signingConfig = signingConfigs.getByName("release")
             }
             isMinifyEnabled = false
-            buildConfigField("boolean", "LYRICS_ONLINE_ENABLED", "false")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -106,4 +103,6 @@ dependencies {
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    testImplementation("junit:junit:4.13.2")
 }
