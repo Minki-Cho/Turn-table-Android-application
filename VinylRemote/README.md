@@ -90,8 +90,8 @@ If your Markdown viewer does not support inline video:
 
 - Privacy policy draft: `docs/PRIVACY_POLICY.md`
 - Public GitHub Pages files live in the repository root `docs/` folder.
-- If the current GitHub origin stays the same, the Play Console privacy-policy URL will be:
-  `https://minki-cho.github.io/Turn-table-Android-application/privacy-policy/`
+- Preferred public privacy-policy URL:
+  `https://picklydeck.minki-portfolio.info/privacy-policy/`
 
 ## 10. Release Artifacts
 

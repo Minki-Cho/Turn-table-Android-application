@@ -44,3 +44,9 @@ The shipped app build does not rely on third-party online services for its core 
 ## Contact
 
 For privacy questions, use the support email listed on the Play Store page or the release support channel you publish with the app.
+
+## Public URL
+
+When GitHub Pages and DNS are configured, this policy should be available at:
+
+`https://picklydeck.minki-portfolio.info/privacy-policy/`

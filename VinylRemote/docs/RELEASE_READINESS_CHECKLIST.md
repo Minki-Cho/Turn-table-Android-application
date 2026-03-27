@@ -29,6 +29,7 @@ Last verified: 2026-03-27 (America/Los_Angeles)
 - [x] Notification permission flow exists for Android 13+
 
 ## Remaining release operations (outside source control)
-- [ ] Enable GitHub Pages for repository `main` -> `/docs` and add `https://minki-cho.github.io/Turn-table-Android-application/privacy-policy/` to Play Console
+- [ ] Enable GitHub Pages for repository `main` -> `/docs`
+- [ ] Point `picklydeck.minki-portfolio.info` DNS to GitHub Pages and add `https://picklydeck.minki-portfolio.info/privacy-policy/` to Play Console
 - [ ] Move the real signing secrets out of the working tree or rotate the upload key if this workspace was ever shared
 - [ ] Play Console upload + staged rollout checks
