@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "VinylRemote"
+rootProject.name = "PicklyDeck"
 include(":app")

@@ -1,18 +1,19 @@
-# Vinyl Remote
+# PicklyDeck
 
-![Vinyl Remote Logo](docs/app-logo-vinylremote.png)
-Android turntable-style remote controller for Spotify / YouTube Music sessions.
+![PicklyDeck Logo](docs/app-logo-vinylremote.png)
+Android turntable-style remote controller for Spotify, YouTube Music, and compatible Android media sessions.
 
 ## 1. Project Summary
 
-Vinyl Remote is a tactile UI experiment:
+PicklyDeck is a tactile UI experiment:
 - Tonearm drag controls playback state (needle in/out)
 - Platter animation and tonearm movement stay synced with media position
-- Lyrics panel supports plain text and LRC line sync
 - Notification/lockscreen/widget controls mirror playback + tonearm intent
+- Notification permission flow and in-app disclosure are built into the app setup
 
 This app does not stream audio directly.  
-It reads and controls active external media sessions via Android MediaSession/Notification Listener.
+It reads and controls active external media sessions via Android MediaSession/Notification Listener.  
+PicklyDeck keeps playback metadata on-device and does not ship with online lyrics lookup.
 
 ## 2. Core Features
 
@@ -21,10 +22,9 @@ It reads and controls active external media sessions via Android MediaSession/No
 - Platter spin-up/spin-down animation
 - Tonearm 3-layer metallic lighting (base/shadow/highlight)
 - Scratch SFX + haptic drop feedback
-- LRC synced lyrics (offset tag support)
-- Theme system: `SILVER`, `BLACK`, `BRONZE`
-- Material texture upgrades
-- Silver brushed metal / Black carbon-like / Bronze wood-grain deck texture
+- Theme system: `AUTO`, `SILVER`, `BLACK`
+- Deck visual modes: `TURNTABLE`, `CAMPFIRE`, `CD_PLAYER`
+- Visualizer modes: `OFF`, `WAVE`, `SPECTRUM`
 - Foldable presets
 - Flip cover-style compact layout
 - Flip open / phone / tablet adaptive layout
@@ -42,35 +42,35 @@ It reads and controls active external media sessions via Android MediaSession/No
 
 ## 4. Architecture
 
-- `VinylViewModel`: playback state sync, needle/seek logic, lyrics fetch/cache, external controls publish
+- `PicklyDeckViewModel`: playback state sync, needle/seek logic, external controls publish
 - `MainActivity` + Compose UI: turntable rendering, gestures, responsive layout presets
 - `ExternalMediaSessionController`: finds and prioritizes active player sessions
-- `LyricsProvider`: lyrics lookup (plain + synced LRC-aware parsing)
-- `VinylExternalControls`: notification + widget rendering/actions
+- `PicklyDeckExternalControls`: notification + widget rendering/actions
+- `PlaybackMath`: shared playback-position and needle-mapping helpers
 
 ## 5. Run Locally
 
 1. Open in Android Studio
 2. Enable Notification Access for this app
-3. Run:
+3. On Android 13+, allow notifications so the ongoing controls notification can appear
+4. Run:
    - `./gradlew :app:assembleDebug`
-4. Install APK:
+5. Install APK:
    - `app/build/outputs/apk/debug/app-debug.apk`
 
 ## 6. Portfolio Demo Checklist
 
 - Needle rest -> needle in -> playback starts
 - Seek slider updates tonearm position live
-- LRC lyrics highlight follows track progression
-- Theme switch (`SILVER/BLACK/BRONZE`) updates material look
+- Theme switch (`AUTO/SILVER/BLACK`) updates material look
 - Foldable emulator: cover/open layout difference
-- Notification + widget: prev/play-next + needle in/out control
+- Notification + widget: prev/play-next + seek +/-10s + needle in/out control
 
 ## 7. Limitations
 
 - Behavior depends on session metadata/actions exposed by each music app
-- Some apps may not expose seek or lyric metadata
-- Online lyrics availability can vary by track
+- Some apps may not expose seek or full metadata
+- Android notification access must stay enabled for the remote UI to work
 
 ## 8. Screenshots / Demo
 
@@ -86,11 +86,18 @@ If your Markdown viewer does not support inline video:
 
 [Open Flip Layout Demo (MP4)](docs/video.mp4)
 
-## 9. Release Build File
+## 9. Privacy
 
-- Unsigned release APK:
-  - `release/VinylRemote-v0.1.0-release-unsigned.apk`
-- SHA-256:
-  - `40EF72B6A65B700C1D673551435D55AC106B092D59F09C7392E3233F04F83B27`
+- Privacy policy draft: `docs/PRIVACY_POLICY.md`
+- Public GitHub Pages files live in the repository root `docs/` folder.
+- If the current GitHub origin stays the same, the Play Console privacy-policy URL will be:
+  `https://minki-cho.github.io/Turn-table-Android-application/privacy-policy/`
 
-Note: this artifact is unsigned. For public distribution, generate and sign a release build with your keystore.
+## 10. Release Artifacts
+
+- Signed release APK:
+  - `app/build/outputs/apk/release/app-release.apk`
+- Play bundle:
+  - `app/build/outputs/bundle/release/app-release.aab`
+- Signing config:
+  - Gradle accepts either `keystore.properties` or `PICKLYDECK_*` environment variables for release signing.

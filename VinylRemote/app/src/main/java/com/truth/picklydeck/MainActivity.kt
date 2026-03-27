@@ -1,15 +1,22 @@
-package com.truth.vinylremote
+package com.truth.picklydeck
 
+import android.Manifest
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -103,11 +110,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.isActive
@@ -435,7 +446,7 @@ private const val PRIMARY_REFLECTION_START = 214f
 private const val PRIMARY_REFLECTION_SWEEP = 56f
 private const val SECONDARY_REFLECTION_START = 20f
 private const val SECONDARY_REFLECTION_SWEEP = 30f
-private const val UI_PREFS_NAME = "vinyl_remote_ui_prefs"
+private const val UI_PREFS_NAME = "picklydeck_ui_prefs"
 private const val UI_PREF_THEME_KEY = "selected_theme"
 private const val UI_PREF_VISUAL_KEY = "selected_visual"
 private const val UI_PREF_VISUALIZER_KEY = "selected_visualizer"
@@ -747,7 +758,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    VinylScreen()
+                    PicklyDeckScreen()
                 }
             }
         }
@@ -755,12 +766,21 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun VinylScreen(vm: VinylViewModel = viewModel()) {
+private fun PicklyDeckScreen(vm: PicklyDeckViewModel = viewModel()) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val scratchEngine = remember { ScratchSoundEngine(context) }
     val uiPrefs = remember(context) {
         context.getSharedPreferences(UI_PREFS_NAME, Context.MODE_PRIVATE)
+    }
+    var hasNotificationPermission by rememberSaveable {
+        mutableStateOf(context.hasPostNotificationsPermission())
+    }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasNotificationPermission = granted
     }
     var selectedTheme by rememberSaveable {
         mutableStateOf(parseThemeOption(uiPrefs.getString(UI_PREF_THEME_KEY, DeckThemeOption.AUTO.name)))
@@ -785,6 +805,15 @@ private fun VinylScreen(vm: VinylViewModel = viewModel()) {
 
     DisposableEffect(Unit) {
         onDispose { scratchEngine.release() }
+    }
+    DisposableEffect(lifecycleOwner, context) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                hasNotificationPermission = context.hasPostNotificationsPermission()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
     LaunchedEffect(selectedTheme) {
         uiPrefs.edit().putString(UI_PREF_THEME_KEY, selectedTheme.name).apply()
@@ -897,7 +926,14 @@ private fun VinylScreen(vm: VinylViewModel = viewModel()) {
                         onVisualSelected = { selectedVisual = it },
                         selectedVisualizer = selectedVisualizer,
                         onVisualizerSelected = { selectedVisualizer = it },
+                        hasNotificationPermission = hasNotificationPermission,
                         onOpenSettings = vm::openNotificationAccessSettings,
+                        onRequestNotificationPermission = {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                        },
+                        onOpenNotificationPermissionSettings = context::openAppNotificationSettings,
                         onPrev = vm::skipPrevious,
                         onPlayPause = vm::togglePlayPause,
                         onNext = vm::skipNext,
@@ -1039,7 +1075,14 @@ private fun VinylScreen(vm: VinylViewModel = viewModel()) {
                     onVisualSelected = { selectedVisual = it },
                     selectedVisualizer = selectedVisualizer,
                     onVisualizerSelected = { selectedVisualizer = it },
+                    hasNotificationPermission = hasNotificationPermission,
                     onOpenSettings = vm::openNotificationAccessSettings,
+                    onRequestNotificationPermission = {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    },
+                    onOpenNotificationPermissionSettings = context::openAppNotificationSettings,
                     onPrev = vm::skipPrevious,
                     onPlayPause = vm::togglePlayPause,
                     onNext = vm::skipNext,
@@ -1053,7 +1096,7 @@ private fun VinylScreen(vm: VinylViewModel = viewModel()) {
 
 @Composable
 private fun NowPlayingPanel(
-    state: VinylUiState,
+    state: PicklyDeckUiState,
     palette: DeckPalette,
     uiScale: Float
 ) {
@@ -1096,7 +1139,7 @@ private fun NowPlayingPanel(
 
 @Composable
 private fun ControlPanel(
-    state: VinylUiState,
+    state: PicklyDeckUiState,
     palette: DeckPalette,
     uiScale: Float,
     selectedTheme: DeckThemeOption,
@@ -1105,7 +1148,10 @@ private fun ControlPanel(
     onVisualSelected: (DeckVisualOption) -> Unit,
     selectedVisualizer: VisualizerOption,
     onVisualizerSelected: (VisualizerOption) -> Unit,
+    hasNotificationPermission: Boolean,
     onOpenSettings: () -> Unit,
+    onRequestNotificationPermission: () -> Unit,
+    onOpenNotificationPermissionSettings: () -> Unit,
     onPrev: () -> Unit,
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
@@ -1113,21 +1159,51 @@ private fun ControlPanel(
     onSeekCommit: (Float) -> Unit
 ) {
     var showDeckSettings by rememberSaveable { mutableStateOf(false) }
+    val needsNotificationPermission =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission
 
-    if (!state.hasNotificationAccess) {
+    if (!state.hasNotificationAccess || needsNotificationPermission) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(scaledDp(16.dp, uiScale, 12.dp)),
             colors = CardDefaults.cardColors(containerColor = palette.cardColor)
         ) {
-            Column(modifier = Modifier.padding(scaledDp(12.dp, uiScale, 8.dp))) {
+            Column(
+                modifier = Modifier.padding(scaledDp(12.dp, uiScale, 8.dp)),
+                verticalArrangement = Arrangement.spacedBy(scaledDp(8.dp, uiScale, 6.dp))
+            ) {
                 Text(
-                    text = "Notification access is required.",
-                    color = palette.bodyColor
+                    text = "Finish access setup",
+                    color = palette.bodyColor,
+                    fontWeight = FontWeight.SemiBold
                 )
-                Spacer(modifier = Modifier.height(scaledDp(6.dp, uiScale, 4.dp)))
-                Button(onClick = onOpenSettings) {
-                    Text("Open Settings")
+                Text(
+                    text = "PicklyDeck reads the active media session title, artist, album art, playback state, and transport controls from your device so it can render the turntable UI, widget, and lock screen controls. This data stays on-device. PicklyDeck does not upload playback history, fetch lyrics, or require an account.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = palette.helperText
+                )
+                if (!state.hasNotificationAccess) {
+                    Text(
+                        text = "Step 1. Enable notification access so Android can expose the active player session.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = palette.bodyColor
+                    )
+                    Button(onClick = onOpenSettings) {
+                        Text("Open Notification Access")
+                    }
+                }
+                if (needsNotificationPermission) {
+                    Text(
+                        text = "Step 2. Allow notifications on Android 13+ so PicklyDeck can show its ongoing controls notification.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = palette.bodyColor
+                    )
+                    Button(onClick = onRequestNotificationPermission) {
+                        Text("Allow Notifications")
+                    }
+                    TextButton(onClick = onOpenNotificationPermissionSettings) {
+                        Text("Open App Notification Settings", color = palette.controlTint)
+                    }
                 }
             }
         }
@@ -1348,7 +1424,7 @@ private fun HeaderCard(
     ) {
         Column(modifier = Modifier.padding(scaledDp(14.dp, uiScale, 10.dp))) {
             Text(
-                text = "Vinyl Remote",
+                text = "PicklyDeck",
                 style = MaterialTheme.typography.headlineSmall,
                 color = palette.titleColor,
                 fontWeight = FontWeight.Bold,
@@ -3068,6 +3144,27 @@ private fun toReadableAppName(packageName: String): String {
         "com.google.android.apps.youtube.music" -> "YouTube Music"
         else -> packageName
     }
+}
+
+private fun Context.hasPostNotificationsPermission(): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+    return ContextCompat.checkSelfPermission(
+        this,
+        Manifest.permission.POST_NOTIFICATIONS
+    ) == PackageManager.PERMISSION_GRANTED
+}
+
+private fun Context.openAppNotificationSettings() {
+    val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+    } else {
+        Intent(
+            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+            Uri.fromParts("package", packageName, null)
+        )
+    }.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    startActivity(intent)
 }
 
 private fun parseThemeOption(raw: String?): DeckThemeOption {

@@ -1,4 +1,4 @@
-package com.truth.vinylremote
+package com.truth.picklydeck
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

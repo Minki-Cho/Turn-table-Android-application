@@ -1,22 +1,22 @@
-package com.truth.vinylremote
+package com.truth.picklydeck
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 
-class VinylRemoteWidgetProvider : AppWidgetProvider() {
+class PicklyDeckTurntableWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
         super.onUpdate(context, appWidgetManager, appWidgetIds)
-        VinylExternalControls.refreshWidget(context.applicationContext)
+        PicklyDeckExternalControls.refreshWidget(context.applicationContext)
     }
 
     override fun onEnabled(context: Context) {
         super.onEnabled(context)
-        VinylExternalControls.refreshWidget(context.applicationContext)
+        PicklyDeckExternalControls.refreshWidget(context.applicationContext)
     }
 
     override fun onAppWidgetOptionsChanged(
@@ -26,6 +26,6 @@ class VinylRemoteWidgetProvider : AppWidgetProvider() {
         newOptions: android.os.Bundle
     ) {
         super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
-        VinylExternalControls.refreshWidget(context.applicationContext)
+        PicklyDeckExternalControls.refreshWidget(context.applicationContext)
     }
 }

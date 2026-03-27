@@ -1,4 +1,4 @@
-package com.truth.vinylremote
+package com.truth.picklydeck
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -11,6 +11,6 @@ class AppPackageInstrumentationTest {
     @Test
     fun appContext_hasExpectedPackageName() {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.truth.vinylremote", appContext.packageName)
+        assertEquals("com.truth.picklydeck", appContext.packageName)
     }
 }

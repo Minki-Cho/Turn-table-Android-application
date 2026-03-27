@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text="Vinyl Remote"
+        android:text="PicklyDeck"
         android:textColor="#FFF5F8FC"
         android:textSize="16sp"
         android:textStyle="bold" />

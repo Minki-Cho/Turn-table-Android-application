@@ -1,21 +1,21 @@
-package com.truth.vinylremote
+package com.truth.picklydeck
 
 import android.content.Context
 import android.content.Intent
 
-internal object VinylControlActions {
-    const val ACTION_PREV = "com.truth.vinylremote.action.PREV"
-    const val ACTION_TOGGLE_PLAY_PAUSE = "com.truth.vinylremote.action.TOGGLE_PLAY_PAUSE"
-    const val ACTION_NEXT = "com.truth.vinylremote.action.NEXT"
-    const val ACTION_SEEK_BACK = "com.truth.vinylremote.action.SEEK_BACK"
-    const val ACTION_SEEK_FORWARD = "com.truth.vinylremote.action.SEEK_FORWARD"
-    const val ACTION_NEEDLE_IN = "com.truth.vinylremote.action.NEEDLE_IN"
-    const val ACTION_NEEDLE_OUT = "com.truth.vinylremote.action.NEEDLE_OUT"
+internal object PicklyDeckControlActions {
+    const val ACTION_PREV = "com.truth.picklydeck.action.PREV"
+    const val ACTION_TOGGLE_PLAY_PAUSE = "com.truth.picklydeck.action.TOGGLE_PLAY_PAUSE"
+    const val ACTION_NEXT = "com.truth.picklydeck.action.NEXT"
+    const val ACTION_SEEK_BACK = "com.truth.picklydeck.action.SEEK_BACK"
+    const val ACTION_SEEK_FORWARD = "com.truth.picklydeck.action.SEEK_FORWARD"
+    const val ACTION_NEEDLE_IN = "com.truth.picklydeck.action.NEEDLE_IN"
+    const val ACTION_NEEDLE_OUT = "com.truth.picklydeck.action.NEEDLE_OUT"
 
     const val NEEDLE_IN = "needle_in"
     const val NEEDLE_OUT = "needle_out"
 
-    private const val PREFS = "vinyl_remote_control_bridge"
+    private const val PREFS = "picklydeck_control_bridge"
     private const val KEY_NEEDLE_SEQ = "needle_seq"
     private const val KEY_NEEDLE_COMMAND = "needle_command"
 
@@ -25,7 +25,7 @@ internal object VinylControlActions {
     )
 
     fun intent(context: Context, action: String): Intent {
-        return Intent(context, VinylControlReceiver::class.java).setAction(action)
+        return Intent(context, PicklyDeckControlReceiver::class.java).setAction(action)
     }
 
     fun writeNeedleCommand(context: Context, command: String) {

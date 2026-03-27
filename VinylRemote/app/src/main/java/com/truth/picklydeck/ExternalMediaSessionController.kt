@@ -1,4 +1,4 @@
-package com.truth.vinylremote
+package com.truth.picklydeck
 
 import android.content.ComponentName
 import android.content.Context
@@ -11,7 +11,7 @@ class ExternalMediaSessionController(private val context: Context) {
     private val mediaSessionManager =
         context.getSystemService(MediaSessionManager::class.java)
     private val listenerComponent =
-        ComponentName(context, VinylNotificationListenerService::class.java)
+        ComponentName(context, PicklyDeckNotificationListenerService::class.java)
 
     private val preferredPackages = listOf(
         "com.spotify.music",

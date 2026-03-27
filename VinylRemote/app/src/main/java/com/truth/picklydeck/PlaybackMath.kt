@@ -1,4 +1,4 @@
-package com.truth.vinylremote
+package com.truth.picklydeck
 
 internal object PlaybackMath {
     const val NEEDLE_PLAY_START = 0.30f

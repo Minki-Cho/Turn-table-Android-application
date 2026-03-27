@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Vinyl Remote</string>
-    <string name="notification_listener_label">Vinyl Remote Session Access</string>
+    <string name="app_name">PicklyDeck</string>
+    <string name="notification_listener_label">PicklyDeck Session Access</string>
     <string name="widget_turntable_description">Large turntable playback widget</string>
 </resources>

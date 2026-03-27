@@ -1,4 +1,4 @@
-package com.truth.vinylremote
+package com.truth.picklydeck
 
 import android.content.Context
 import android.media.AudioAttributes

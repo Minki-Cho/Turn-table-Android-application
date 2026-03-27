@@ -8,20 +8,37 @@ plugins {
 
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 val keystoreProperties = Properties()
-val hasReleaseKeystore = keystorePropertiesFile.exists()
+val hasKeystoreProperties = keystorePropertiesFile.exists()
 
-if (hasReleaseKeystore) {
+if (hasKeystoreProperties) {
     FileInputStream(keystorePropertiesFile).use { stream ->
         keystoreProperties.load(stream)
     }
 }
 
+fun signingConfigValue(envName: String, propertyName: String): String? {
+    val fromEnv = System.getenv(envName)?.trim().orEmpty()
+    if (fromEnv.isNotEmpty()) return fromEnv
+    return keystoreProperties.getProperty(propertyName)?.trim()?.takeIf { it.isNotEmpty() }
+}
+
+val releaseStoreFilePath = signingConfigValue("PICKLYDECK_STORE_FILE", "storeFile")
+val releaseStorePassword = signingConfigValue("PICKLYDECK_STORE_PASSWORD", "storePassword")
+val releaseKeyAlias = signingConfigValue("PICKLYDECK_KEY_ALIAS", "keyAlias")
+val releaseKeyPassword = signingConfigValue("PICKLYDECK_KEY_PASSWORD", "keyPassword")
+val hasReleaseSigning = listOf(
+    releaseStoreFilePath,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword
+).all { !it.isNullOrBlank() }
+
 android {
-    namespace = "com.truth.vinylremote"
+    namespace = "com.truth.picklydeck"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.truth.vinylremote"
+        applicationId = "com.truth.picklydeck"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
@@ -30,12 +47,12 @@ android {
     }
 
     signingConfigs {
-        if (hasReleaseKeystore) {
+        if (hasReleaseSigning) {
             create("release") {
-                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
-                storePassword = keystoreProperties.getProperty("storePassword")
-                keyAlias = keystoreProperties.getProperty("keyAlias")
-                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = rootProject.file(releaseStoreFilePath!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
             }
         }
     }
@@ -43,7 +60,7 @@ android {
     buildTypes {
         debug {}
         release {
-            if (hasReleaseKeystore) {
+            if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
             }
             isMinifyEnabled = false

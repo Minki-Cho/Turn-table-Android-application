@@ -1,4 +1,4 @@
-package com.truth.vinylremote
+package com.truth.picklydeck
 
 import android.app.Application
 import android.content.Intent
@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-data class VinylUiState(
+data class PicklyDeckUiState(
     val hasNotificationAccess: Boolean = false,
     val connectedPackage: String? = null,
     val title: String = "Looking for active player",
@@ -32,7 +32,7 @@ data class VinylUiState(
     val albumArt: Bitmap? = null
 )
 
-class VinylViewModel(application: Application) : AndroidViewModel(application) {
+class PicklyDeckViewModel(application: Application) : AndroidViewModel(application) {
     companion object {
         // 0f~1f: tonearm progress from rest(white area) to inner groove.
         private const val NEEDLE_PAUSE_THRESHOLD = 0.20f
@@ -44,16 +44,16 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
     private val mediaController = ExternalMediaSessionController(application)
 
     private val _uiState = MutableStateFlow(
-        VinylUiState(hasNotificationAccess = mediaController.hasNotificationAccess())
+        PicklyDeckUiState(hasNotificationAccess = mediaController.hasNotificationAccess())
     )
-    val uiState: StateFlow<VinylUiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<PicklyDeckUiState> = _uiState.asStateFlow()
 
     private var activeController: MediaController? = null
     private var sessionCallback: MediaController.Callback? = null
     private var needleIntentPlaying: Boolean? = null
     private var suppressAutoNeedleUntilMs: Long = 0L
     private var lastExternalControlSignature = ""
-    private var lastHandledNeedleCommandSeq = VinylControlActions.readNeedleCommand(application).seq
+    private var lastHandledNeedleCommandSeq = PicklyDeckControlActions.readNeedleCommand(application).seq
 
     init {
         viewModelScope.launch {
@@ -193,7 +193,7 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
             lastExternalControlSignature = ""
-            VinylExternalControls.cancel(getApplication())
+            PicklyDeckExternalControls.cancel(getApplication())
             return
         }
 
@@ -277,17 +277,17 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
         } else {
             _uiState.value.needleProgress
         }
-        val externalNeedleCommand = VinylControlActions.readNeedleCommand(getApplication())
+        val externalNeedleCommand = PicklyDeckControlActions.readNeedleCommand(getApplication())
         var commandNeedleProgress: Float? = null
         var commandPlaying: Boolean? = null
         if (externalNeedleCommand.seq > lastHandledNeedleCommandSeq) {
             lastHandledNeedleCommandSeq = externalNeedleCommand.seq
             when (externalNeedleCommand.command) {
-                VinylControlActions.NEEDLE_IN -> {
+                PicklyDeckControlActions.NEEDLE_IN -> {
                     commandNeedleProgress = maxOf(autoNeedleProgress, NEEDLE_PLAY_START)
                     commandPlaying = true
                 }
-                VinylControlActions.NEEDLE_OUT -> {
+                PicklyDeckControlActions.NEEDLE_OUT -> {
                     commandNeedleProgress = NEEDLE_SNAP_PAUSE
                     commandPlaying = false
                 }
@@ -315,7 +315,7 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
         publishExternalControls(_uiState.value)
     }
 
-    private fun publishExternalControls(state: VinylUiState) {
+    private fun publishExternalControls(state: PicklyDeckUiState) {
         val signature = buildString {
             append(state.connectedPackage.orEmpty())
             append('|')
@@ -333,7 +333,7 @@ class VinylViewModel(application: Application) : AndroidViewModel(application) {
         }
         if (signature == lastExternalControlSignature) return
         lastExternalControlSignature = signature
-        VinylExternalControls.publish(getApplication(), state)
+        PicklyDeckExternalControls.publish(getApplication(), state)
     }
 
     private fun resolvePositionMs(state: PlaybackState?, durationMs: Long): Long {

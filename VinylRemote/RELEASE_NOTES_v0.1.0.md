@@ -1,22 +1,24 @@
-# Vinyl Remote v0.1.0
+# PicklyDeck v0.1.0
 
-First public portfolio release of Vinyl Remote.
+First public release candidate of PicklyDeck.
 
 ## Highlights
 
 - Turntable-style interaction with tonearm drag control
 - Needle in/out mapped to playback state changes
-- LRC synced lyrics support (timestamp + offset)
-- Theme presets: SILVER / BLACK / BRONZE
+- Android 13 notification-permission handling and clearer in-app access disclosure
+- Theme presets: AUTO / SILVER / BLACK
+- Deck visuals: TURNTABLE / CAMPFIRE / CD_PLAYER
 - Foldable-friendly layout presets (Flip cover/open handling)
 - Notification + lockscreen + widget controls
+- Lyrics functionality removed from the shipping build
 
 ## Build Artifact
 
-- File: `VinylRemote-v0.1.0-release-unsigned.apk`
-- SHA-256: `40EF72B6A65B700C1D673551435D55AC106B092D59F09C7392E3233F04F83B27`
+- APK: `app/build/outputs/apk/release/app-release.apk`
+- AAB: `app/build/outputs/bundle/release/app-release.aab`
 
 ## Notes
 
-- This APK is unsigned.
-- For Play Store distribution, use signed release artifacts (APK/AAB).
+- Release signing can be supplied by either `keystore.properties` or `PICKLYDECK_*` environment variables.
+- Publish the privacy policy from `docs/PRIVACY_POLICY.md` at a stable public URL before Play Store submission.

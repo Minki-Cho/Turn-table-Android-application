@@ -1,4 +1,4 @@
-package com.truth.vinylremote
+package com.truth.picklydeck
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -17,12 +17,12 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.media.app.NotificationCompat as MediaStyleCompat
 
-internal object VinylExternalControls {
-    private const val CHANNEL_ID = "vinyl_remote_controls_v2"
-    private const val CHANNEL_NAME = "Vinyl Remote Controls"
+internal object PicklyDeckExternalControls {
+    private const val CHANNEL_ID = "picklydeck_controls_v2"
+    private const val CHANNEL_NAME = "PicklyDeck Controls"
     private const val NOTIFICATION_ID = 8041
 
-    private const val SNAPSHOT_PREFS = "vinyl_remote_widget_snapshot"
+    private const val SNAPSHOT_PREFS = "picklydeck_widget_snapshot"
     private const val KEY_TITLE = "title"
     private const val KEY_ARTIST = "artist"
     private const val KEY_IS_PLAYING = "is_playing"
@@ -30,14 +30,14 @@ internal object VinylExternalControls {
     private const val KEY_POSITION_MS = "position_ms"
     private const val KEY_DURATION_MS = "duration_ms"
 
-    fun publish(context: Context, state: VinylUiState) {
+    fun publish(context: Context, state: PicklyDeckUiState) {
         ensureChannel(context)
         saveSnapshot(context, state)
 
         val needleAction = if (state.isPlaying) {
-            VinylControlActions.ACTION_NEEDLE_OUT
+            PicklyDeckControlActions.ACTION_NEEDLE_OUT
         } else {
-            VinylControlActions.ACTION_NEEDLE_IN
+            PicklyDeckControlActions.ACTION_NEEDLE_IN
         }
         val needleLabel = if (state.isPlaying) "Needle Out" else "Needle In"
         val needleIcon = if (state.isPlaying) {
@@ -65,7 +65,7 @@ internal object VinylExternalControls {
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_media_play)
-            .setContentTitle(state.title.ifBlank { "Vinyl Remote" })
+            .setContentTitle(state.title.ifBlank { "PicklyDeck" })
             .setContentText(bodyText)
             .setSubText(summaryText)
             .setContentIntent(openApp)
@@ -83,17 +83,17 @@ internal object VinylExternalControls {
             .addAction(
                 android.R.drawable.ic_media_rew,
                 "-10s",
-                broadcastIntent(context, VinylControlActions.ACTION_SEEK_BACK, 2)
+                broadcastIntent(context, PicklyDeckControlActions.ACTION_SEEK_BACK, 2)
             )
             .addAction(
                 playPauseIcon,
                 playPauseLabel,
-                broadcastIntent(context, VinylControlActions.ACTION_TOGGLE_PLAY_PAUSE, 3)
+                broadcastIntent(context, PicklyDeckControlActions.ACTION_TOGGLE_PLAY_PAUSE, 3)
             )
             .addAction(
                 android.R.drawable.ic_media_ff,
                 "+10s",
-                broadcastIntent(context, VinylControlActions.ACTION_SEEK_FORWARD, 4)
+                broadcastIntent(context, PicklyDeckControlActions.ACTION_SEEK_FORWARD, 4)
             )
             .setStyle(
                 MediaStyleCompat.MediaStyle()
@@ -119,15 +119,15 @@ internal object VinylExternalControls {
         updateWidget(context, loadSnapshot(context))
     }
 
-    fun loadSnapshot(context: Context): VinylUiState {
+    fun loadSnapshot(context: Context): PicklyDeckUiState {
         val prefs = context.getSharedPreferences(SNAPSHOT_PREFS, Context.MODE_PRIVATE)
-        val title = prefs.getString(KEY_TITLE, "Vinyl Remote").orEmpty()
+        val title = prefs.getString(KEY_TITLE, "PicklyDeck").orEmpty()
         val artist = prefs.getString(KEY_ARTIST, "No active playback").orEmpty()
         val isPlaying = prefs.getBoolean(KEY_IS_PLAYING, false)
         val needleOnRecord = prefs.getBoolean(KEY_NEEDLE_ON_RECORD, false)
         val positionMs = prefs.getLong(KEY_POSITION_MS, 0L)
         val durationMs = prefs.getLong(KEY_DURATION_MS, 0L)
-        return VinylUiState(
+        return PicklyDeckUiState(
             title = title,
             artist = artist,
             isPlaying = isPlaying,
@@ -137,7 +137,7 @@ internal object VinylExternalControls {
         )
     }
 
-    private fun saveSnapshot(context: Context, state: VinylUiState) {
+    private fun saveSnapshot(context: Context, state: PicklyDeckUiState) {
         context.getSharedPreferences(SNAPSHOT_PREFS, Context.MODE_PRIVATE)
             .edit()
             .putString(KEY_TITLE, state.title)
@@ -149,18 +149,18 @@ internal object VinylExternalControls {
             .apply()
     }
 
-    private fun updateWidget(context: Context, state: VinylUiState) {
+    private fun updateWidget(context: Context, state: PicklyDeckUiState) {
         val appWidgetManager = AppWidgetManager.getInstance(context)
         updateWidgetSet(
             context = context,
             appWidgetManager = appWidgetManager,
-            widgetComponent = ComponentName(context, VinylRemoteWidgetProvider::class.java),
+            widgetComponent = ComponentName(context, PicklyDeckWidgetProvider::class.java),
             state = state
         )
         updateWidgetSet(
             context = context,
             appWidgetManager = appWidgetManager,
-            widgetComponent = ComponentName(context, VinylTurntableWidgetProvider::class.java),
+            widgetComponent = ComponentName(context, PicklyDeckTurntableWidgetProvider::class.java),
             state = state
         )
     }
@@ -169,13 +169,13 @@ internal object VinylExternalControls {
         context: Context,
         appWidgetManager: AppWidgetManager,
         widgetComponent: ComponentName,
-        state: VinylUiState
+        state: PicklyDeckUiState
     ) {
         val ids = appWidgetManager.getAppWidgetIds(widgetComponent)
         if (ids.isEmpty()) return
 
         val isTurntableWidget =
-            widgetComponent.className == VinylTurntableWidgetProvider::class.java.name
+            widgetComponent.className == PicklyDeckTurntableWidgetProvider::class.java.name
         val baseRequestCode = if (isTurntableWidget) 5000 else 1000
 
         ids.forEach { appWidgetId ->
@@ -186,7 +186,7 @@ internal object VinylExternalControls {
             )
             remoteViews.setTextViewText(
                 R.id.widget_title,
-                state.title.ifBlank { "Vinyl Remote" }
+                state.title.ifBlank { "PicklyDeck" }
             )
             remoteViews.setTextViewText(
                 R.id.widget_subtitle,
@@ -203,19 +203,19 @@ internal object VinylExternalControls {
 
             remoteViews.setOnClickPendingIntent(
                 R.id.widget_btn_prev,
-                broadcastIntent(context, VinylControlActions.ACTION_PREV, baseRequestCode + 11 + appWidgetId * 10)
+                broadcastIntent(context, PicklyDeckControlActions.ACTION_PREV, baseRequestCode + 11 + appWidgetId * 10)
             )
             remoteViews.setOnClickPendingIntent(
                 R.id.widget_btn_play_pause,
                 broadcastIntent(
                     context,
-                    VinylControlActions.ACTION_TOGGLE_PLAY_PAUSE,
+                    PicklyDeckControlActions.ACTION_TOGGLE_PLAY_PAUSE,
                     baseRequestCode + 12 + appWidgetId * 10
                 )
             )
             remoteViews.setOnClickPendingIntent(
                 R.id.widget_btn_next,
-                broadcastIntent(context, VinylControlActions.ACTION_NEXT, baseRequestCode + 13 + appWidgetId * 10)
+                broadcastIntent(context, PicklyDeckControlActions.ACTION_NEXT, baseRequestCode + 13 + appWidgetId * 10)
             )
             remoteViews.setOnClickPendingIntent(
                 R.id.widget_btn_extra,
@@ -261,7 +261,7 @@ internal object VinylExternalControls {
         return PendingIntent.getBroadcast(
             context,
             requestCode,
-            VinylControlActions.intent(context, action),
+            PicklyDeckControlActions.intent(context, action),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     }
