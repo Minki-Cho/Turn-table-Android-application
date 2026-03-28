@@ -49,4 +49,4 @@ For privacy questions, use the support email listed on the Play Store page or th
 
 When GitHub Pages and DNS are configured, this policy should be available at:
 
-`https://picklydeck.minki-portfolio.info/privacy-policy/`
+`https://minki-cho.github.io/Turn-table-Android-application/privacy-policy/`

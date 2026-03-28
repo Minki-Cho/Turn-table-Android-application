@@ -90,8 +90,8 @@ If your Markdown viewer does not support inline video:
 
 - Privacy policy draft: `docs/PRIVACY_POLICY.md`
 - Public GitHub Pages files live in the repository root `docs/` folder.
-- Preferred public privacy-policy URL:
-  `https://picklydeck.minki-portfolio.info/privacy-policy/`
+- Public privacy-policy URL:
+  `https://minki-cho.github.io/Turn-table-Android-application/privacy-policy/`
 
 ## 10. Release Artifacts
 

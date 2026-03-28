@@ -47,8 +47,8 @@ For privacy questions, use the support email listed on the Play Store page or th
 
 ## Publishing Note
 
-The GitHub Pages version of this policy should live at `/privacy-policy/` on the configured custom domain.
+The GitHub Pages version of this policy should live at `/privacy-policy/` on the default repository Pages URL.
 
-Preferred public URL:
+Public URL:
 
-`https://picklydeck.minki-portfolio.info/privacy-policy/`
+`https://minki-cho.github.io/Turn-table-Android-application/privacy-policy/`
